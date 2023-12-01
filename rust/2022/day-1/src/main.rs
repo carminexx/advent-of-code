@@ -1,4 +1,4 @@
-use std::{fs::read_to_string, str::LinesAny};
+use std::fs::read_to_string;
 
 // Note: Correct answer for part 1 is: 55621
 // Note: Correct answer for part 2 is: 201491

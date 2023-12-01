@@ -1,16 +1,12 @@
-use std::fs::read_to_string;
+use std::fs;
 
-// Note: Correct answer for part 1 is: 55621
-
-fn main() {
+fn solve() -> i32 {
     let filename = "input.txt";
-    let mut lines: Vec<String> = read_to_string(filename) 
+    let mut lines: Vec<String> = fs::read_to_string(filename)
         .unwrap()
-        .lines() 
+        .lines()
         .map(String::from)
-        .map(|c| c.chars()
-                            .filter(|x| x.is_digit(10))
-                            .collect())
+        .map(|c| c.chars().filter(|x| x.is_digit(10)).collect())
         .collect();
 
     // Notes for improvement: I think I can somehow merge this second loop within the first iterator stream above
@@ -21,6 +17,19 @@ fn main() {
         *line = format!("{first}{last}");
     }
 
-    let sum: i32 = lines.iter().map(|x| x.parse().unwrap_or(0)).sum();
-    println!("{}", sum);
+    lines.iter().map(|x| x.parse().unwrap_or(0)).sum()
+}
+
+fn main() {
+    println!("{}", solve());
+}
+
+#[cfg(test)]
+mod test {
+    use super::solve;
+
+    #[test]
+    fn solution() {
+        assert_eq!(55621, solve());
+    }
 }

@@ -1,23 +1,17 @@
 use std::fs;
 
-fn solve() -> i32 {
-    let filename = "input.txt";
-    let mut lines: Vec<String> = fs::read_to_string(filename)
+fn solve() -> u32 {
+    fs::read_to_string("input.txt")
         .unwrap()
         .lines()
-        .map(String::from)
-        .map(|c| c.chars().filter(|x| x.is_digit(10)).collect())
-        .collect();
+        .map(|line| line.chars().filter(char::is_ascii_digit).collect())
+        .map(|digits: Vec<_>| {
+            let a = digits.first().unwrap();
+            let b = digits.last().unwrap();
 
-    // Notes for improvement: I think I can somehow merge this second loop within the first iterator stream above
-    for line in &mut lines {
-        let first = line.chars().nth(0).unwrap_or('\0');
-        let last = line.chars().last().unwrap_or('\0');
-
-        *line = format!("{first}{last}");
-    }
-
-    lines.iter().map(|x| x.parse().unwrap_or(0)).sum()
+            a.to_digit(10).unwrap() * 10 + b.to_digit(10).unwrap()
+        })
+        .sum()
 }
 
 fn main() {

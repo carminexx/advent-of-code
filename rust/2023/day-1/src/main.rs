@@ -1,26 +1,29 @@
-use std::fs::read_to_string;
+use std::fs;
 
-// Note: Correct answer for part 1 is: 55621
+fn solve() -> u32 {
+    fs::read_to_string("input.txt")
+        .unwrap()
+        .lines()
+        .map(|line| line.chars().filter(char::is_ascii_digit).collect())
+        .map(|digits: Vec<_>| {
+            let a = digits.first().unwrap();
+            let b = digits.last().unwrap();
+
+            a.to_digit(10).unwrap() * 10 + b.to_digit(10).unwrap()
+        })
+        .sum()
+}
 
 fn main() {
-    let filename = "input.txt";
-    let mut lines: Vec<String> = read_to_string(filename) 
-        .unwrap()
-        .lines() 
-        .map(String::from)
-        .map(|c| c.chars()
-                            .filter(|x| x.is_digit(10))
-                            .collect())
-        .collect();
+    println!("{}", solve());
+}
 
-    // Notes for improvement: I think I can somehow merge this second loop within the first iterator stream above
-    for line in &mut lines {
-        let first = line.chars().nth(0).unwrap_or('\0');
-        let last = line.chars().last().unwrap_or('\0');
+#[cfg(test)]
+mod test {
+    use super::solve;
 
-        *line = format!("{first}{last}");
+    #[test]
+    fn solution() {
+        assert_eq!(55621, solve());
     }
-
-    let sum: i32 = lines.iter().map(|x| x.parse().unwrap_or(0)).sum();
-    println!("{}", sum);
 }

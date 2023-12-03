@@ -1,41 +1,100 @@
-use lazy_static::lazy_static;
-use std::{collections::HashMap, fs};
+use anyhow::{anyhow, Context, Error, Result};
+use itertools::Itertools;
+use std::{fs, str::FromStr};
 
-lazy_static! {
-    static ref COLOR_CONSTRAINS: HashMap<&'static str, u8> = 
-        HashMap::from([("red", 12), ("green", 13), ("blue", 14)]);
+type Amount = u32;
+type Id = u32;
+
+#[derive(Debug)]
+struct Game {
+    id: Id,
+    sets: Vec<Set>,
 }
-const INPUT_PREFIX: &str = "Game ";
 
-// Part 1
+#[derive(Debug, Default, Clone, Copy)]
+struct Set {
+    blue: Amount,
+    red: Amount,
+    green: Amount,
+}
 
-fn solve() -> u32 {
+impl Set {
+    fn is_possible(&self) -> bool {
+        self.red <= 12 && self.green <= 13 && self.blue <= 14
+    }
+
+    fn max(&self, other: &Set) -> Self {
+        Self {
+            red: other.red.max(self.red),
+            green: other.green.max(self.green),
+            blue: other.blue.max(self.blue),
+        }
+    }
+}
+
+impl FromStr for Game {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self> {
+        let (game, sets) = s
+            .splitn(2, ": ")
+            .collect_tuple()
+            .context("failed to parse around ':'")?;
+
+        let (_, id) = game
+            .splitn(2, ' ')
+            .collect_tuple()
+            .context("failed to parse around ' '")?;
+
+        let id = id.parse().context("failed to parse game id")?;
+
+        let sets = sets
+            .split("; ")
+            .map(str::parse)
+            .collect::<Result<_>>()
+            .context("failed to parse game sets")?;
+
+        Ok(Game { id, sets })
+    }
+}
+
+impl FromStr for Set {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self> {
+        let mut set = Set::default();
+
+        for ss in s.split(", ") {
+            let (amount, color) = ss
+                .split(' ')
+                .collect_tuple()
+                .context("failed to parse set")?;
+
+            let amount = amount.parse().context("failed to parse cubes amount")?;
+
+            match color {
+                "blue" => set.blue = amount,
+                "red" => set.red = amount,
+                "green" => set.green = amount,
+                _ => return Err(anyhow!("unknown cube color {color}")),
+            }
+        }
+
+        Ok(set)
+    }
+}
+
+fn solve_part1() -> u32 {
     fs::read_to_string("input.txt")
         .unwrap()
         .lines()
         .map(|line| {
-            let (game_id, game_rounds) = line
-                .strip_prefix(INPUT_PREFIX)
+            line.parse::<Game>()
+                .context("failed to parse game")
                 .unwrap()
-                .split_once(':')
-                .unwrap();
-            let mut subsets = game_rounds.trim().split(';');
-
-            if subsets.any(|x| {
-                let mut cubes = x.trim().split(',');
-                cubes.any(|c| {
-                    let (value, color) = c.trim().split_once(' ').unwrap();
-
-                    COLOR_CONSTRAINS.get(color).unwrap() < &value.parse::<u8>().unwrap()
-                })
-            }) {
-                // Game invalid, ignore game ID
-                0
-            } else {
-                // Game valid, return game ID to sum
-                game_id.parse::<u32>().unwrap()
-            }
         })
+        .filter(|game| game.sets.iter().all(Set::is_possible))
+        .map(|game| game.id)
         .sum()
 }
 
@@ -44,58 +103,35 @@ fn solve_part2() -> u32 {
         .unwrap()
         .lines()
         .map(|line| {
-            let (game_id, game_rounds) = line
-                .strip_prefix(INPUT_PREFIX)
+            line.parse::<Game>()
+                .context("failed to parse game")
                 .unwrap()
-                .split_once(':')
-                .unwrap();
-            let subsets = game_rounds.trim().split(';');
+        })
+        .map(|Game { sets, .. }| {
+            let Set { red, green, blue } =
+                sets.iter().fold(Set::default(), |acc, set| acc.max(set));
 
-            let mut max_cubes_in_a_game: HashMap<&str, u8> = HashMap::new();
-
-            subsets.for_each(|x| {
-                let cubes = x.trim().split(',');
-                cubes.for_each(|c| {
-                    let (value, color) = c.trim().split_once(' ').unwrap();
-
-                    max_cubes_in_a_game.insert(color, 
-                    match max_cubes_in_a_game.get(color) {
-                        Some(number) => {
-                            if number > &value.parse::<u8>().unwrap() {
-                                *number
-                            } else {
-                                value.parse::<u8>().unwrap()
-                            }
-                        },
-                        None => value.parse::<u8>().unwrap()
-                    });
-                })
-            });
-
-            // Calculate power of cubes
-
-            // Note: the cast to u32 is needed to avoid overflow when calculating the product, probably
-            // a cleaner solution by casting only the product itself and not all other elements is possible
-            max_cubes_in_a_game.iter().map(|x| u32::from(*x.1)).product::<u32>()
-            
+            red * green * blue
         })
         .sum()
 }
 
 fn main() {
-    println!("Part one: {}", solve());
+    println!("Part one: {}", solve_part1());
     println!("Part two: {}", solve_part2());
 }
 
 #[cfg(test)]
 mod test {
-    use crate::solve_part2;
-
-    use super::solve;
+    use super::*;
 
     #[test]
-    fn solution() {
-        assert_eq!(2447, solve());
+    fn test_solve_part1() {
+        assert_eq!(2447, solve_part1());
+    }
+
+    #[test]
+    fn test_solve_part2() {
         assert_eq!(56322, solve_part2());
     }
 }

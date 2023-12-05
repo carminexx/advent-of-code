@@ -1,12 +1,12 @@
-use std::{collections::{HashSet, HashMap}, fs, str::FromStr};
-use anyhow::{anyhow, Context, Error, Result};
+use anyhow::{Context, Error, Result};
 use itertools::Itertools;
+use std::{collections::HashMap, collections::HashSet, fs, str::FromStr};
 
- #[derive(Debug, Clone)]
- struct ScratchCard {
+#[derive(Debug, Clone)]
+struct ScratchCard {
     id: u32,
     winning_numbers: HashSet<u8>,
-    scratched_numbers: HashSet<u8>
+    scratched_numbers: HashSet<u8>,
 }
 
 impl FromStr for ScratchCard {
@@ -18,7 +18,7 @@ impl FromStr for ScratchCard {
             .collect_tuple()
             .context("failed to parse around ':'")?;
 
-        let (_ ,id) = id
+        let (_, id) = id
             .split_ascii_whitespace()
             .collect_tuple()
             .context("failed to parse around ' '")?;
@@ -27,24 +27,41 @@ impl FromStr for ScratchCard {
 
         let (winning_numbers, scratched_numbers) = numbers
             .splitn(2, " | ")
-            .map(|x| x.split_ascii_whitespace().map(|y| y.parse().unwrap()).collect())
+            .map(|x| {
+                x.split_ascii_whitespace()
+                    .map(|y| y.parse().unwrap())
+                    .collect()
+            })
             .collect_tuple()
             .context("failed to parse scratchcard numbers")?;
 
-        Ok(ScratchCard { id, winning_numbers, scratched_numbers })
+        Ok(ScratchCard {
+            id,
+            winning_numbers,
+            scratched_numbers,
+        })
     }
 }
 
 impl ScratchCard {
-    fn scratched_winnings(&self) -> u8 {
-        self.scratched_numbers.intersection(&self.winning_numbers).count() as u8
+    fn winnings(&self) -> u8 {
+        self.scratched_numbers
+            .intersection(&self.winning_numbers)
+            .count() as u8
     }
 
-    fn calculate_card_score(&self) -> u32 {
-        match &self.scratched_winnings() {
+    fn score(&self) -> Result<u32> {
+        let winning_count = u32::try_from(
+            self.scratched_numbers
+                .intersection(&self.winning_numbers)
+                .count(),
+        )
+        .context("winning numbers > u32::MAX")?;
+
+        Ok(match winning_count {
             0 => 0,
-            _ => 2u32.pow(self.scratched_winnings() as u32 - 1) as u32
-        }
+            n => 2_u32.pow(n - 1),
+        })
     }
 }
 
@@ -57,7 +74,7 @@ fn solve_part1() -> u32 {
                 .context("failed to parse scratchcard")
                 .unwrap()
         })
-        .map(|card| card.calculate_card_score())
+        .map(|card| card.score().unwrap())
         .sum()
 }
 
@@ -75,24 +92,26 @@ fn solve_part2(input_source: &str) -> u32 {
         .map(|c| (c.id, c))
         .collect();
 
-    let mut winned_cards: Vec<ScratchCard> = original_cards.iter().map(|x| x.1.clone()).collect::<Vec<_>>();
+    let mut winned_cards: Vec<ScratchCard> = original_cards
+        .iter()
+        .map(|x| x.1.clone())
+        .collect::<Vec<_>>();
     let mut score: u32 = 0;
 
     while let Some(card) = winned_cards.pop() {
-        //winned_cards.push(card.clone()); // Put also fir
         score += 1;
-        if card.scratched_winnings() == 0 {
+        if card.winnings() == 0 {
             continue;
         }
 
-        for c in 1..=card.scratched_winnings() {
+        for c in 1..=card.winnings() {
             match original_cards.get(&(card.id + c as u32)) {
                 Some(c) => winned_cards.push(c.clone()),
-                None => continue
+                None => continue,
             }
         }
     }
-    
+
     score
 }
 
@@ -107,12 +126,17 @@ mod test {
 
     #[test]
     fn test_example_card() {
-        let raw_card = String::from("Card 1: 41 48 83 86 17 | 83 86  6 31 17  9 48 53");
-        let parsed_card = ScratchCard::from_str(&raw_card).unwrap();
-        assert_eq!(1, parsed_card.id);
-        assert_eq!(HashSet::from([41, 48, 83, 86, 17]), parsed_card.winning_numbers);
-        assert_eq!(HashSet::from([83, 86, 6, 31, 17, 9, 48, 53]), parsed_card.scratched_numbers);
-        assert_eq!(8, parsed_card.calculate_card_score());
+        let card: ScratchCard = "Card 1: 41 48 83 86 17 | 83 86  6 31 17  9 48 53"
+            .parse()
+            .unwrap();
+
+        assert_eq!(1, card.id);
+        assert_eq!(HashSet::from([41, 48, 83, 86, 17]), card.winning_numbers);
+        assert_eq!(
+            HashSet::from([83, 86, 6, 31, 17, 9, 48, 53]),
+            card.scratched_numbers
+        );
+        assert_eq!(8, card.score().unwrap());
     }
 
     #[test]

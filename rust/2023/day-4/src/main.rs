@@ -1,12 +1,11 @@
 use anyhow::{Context, Error, Result};
 use itertools::Itertools;
-use std::{collections::HashMap, collections::HashSet, fs, str::FromStr};
+use std::{fs, str::FromStr};
 
 #[derive(Debug, Clone)]
 struct ScratchCard {
-    id: u32,
-    winning_numbers: HashSet<u8>,
-    scratched_numbers: HashSet<u8>,
+    id: usize,
+    winning_count: usize,
 }
 
 impl FromStr for ScratchCard {
@@ -30,42 +29,34 @@ impl FromStr for ScratchCard {
             .map(|x| {
                 x.split_ascii_whitespace()
                     .map(|y| y.parse().unwrap())
-                    .collect()
+                    .collect_vec()
             })
             .collect_tuple()
             .context("failed to parse scratchcard numbers")?;
 
-        Ok(ScratchCard {
-            id,
-            winning_numbers,
-            scratched_numbers,
-        })
+        Ok(ScratchCard::new(id, &winning_numbers, &scratched_numbers))
     }
 }
 
 impl ScratchCard {
-    fn winnings(&self) -> u8 {
-        self.scratched_numbers
-            .intersection(&self.winning_numbers)
-            .count() as u8
+    fn new(id: usize, winning_numbers: &[u8], scratched_numbers: &[u8]) -> Self {
+        let winning_count = winning_numbers
+            .iter()
+            .filter(|n| scratched_numbers.contains(n))
+            .count();
+
+        Self { id, winning_count }
     }
 
-    fn score(&self) -> Result<u32> {
-        let winning_count = u32::try_from(
-            self.scratched_numbers
-                .intersection(&self.winning_numbers)
-                .count(),
-        )
-        .context("winning numbers > u32::MAX")?;
-
-        Ok(match winning_count {
+    fn score(&self) -> usize {
+        match self.winning_count {
             0 => 0,
-            n => 2_u32.pow(n - 1),
-        })
+            n => 2usize.pow(n as u32 - 1),
+        }
     }
 }
 
-fn solve_part1() -> u32 {
+fn solve_part1() -> usize {
     fs::read_to_string("input.txt")
         .unwrap()
         .lines()
@@ -74,14 +65,12 @@ fn solve_part1() -> u32 {
                 .context("failed to parse scratchcard")
                 .unwrap()
         })
-        .map(|card| card.score().unwrap())
+        .map(|card| card.score())
         .sum()
 }
 
-// Brute-force solution, adding each card to the list and counting the final score.
-// Tooks over 30-40 seconds to run, there's a lot of room for improvement for sure.
-fn solve_part2(input_source: &str) -> u32 {
-    let original_cards: HashMap<u32, ScratchCard> = fs::read_to_string(input_source)
+fn solve_part2(input_source: &str) -> usize {
+    let cards = fs::read_to_string(input_source)
         .unwrap()
         .lines()
         .map(|line| {
@@ -89,25 +78,25 @@ fn solve_part2(input_source: &str) -> u32 {
                 .context("failed to parse scratchcard")
                 .unwrap()
         })
-        .map(|c| (c.id, c))
-        .collect();
+        .collect_vec();
 
-    let mut winned_cards: Vec<ScratchCard> = original_cards
-        .iter()
-        .map(|x| x.1.clone())
-        .collect::<Vec<_>>();
-    let mut score: u32 = 0;
+    let mut won_cards = cards.iter().map(|card| card.id).collect_vec();
+    let mut score = 0;
 
-    while let Some(card) = winned_cards.pop() {
+    while let Some(card_id) = won_cards.pop() {
         score += 1;
-        if card.winnings() == 0 {
+
+        let winning_count = cards[card_id - 1].winning_count;
+
+        if winning_count == 0 {
             continue;
         }
 
-        for c in 1..=card.winnings() {
-            match original_cards.get(&(card.id + c as u32)) {
-                Some(c) => winned_cards.push(c.clone()),
-                None => continue,
+        for idx in 1..=winning_count {
+            let winning_card_id = card_id + idx;
+
+            if winning_card_id <= cards.len() {
+                won_cards.push(winning_card_id);
             }
         }
     }
@@ -131,12 +120,8 @@ mod test {
             .unwrap();
 
         assert_eq!(1, card.id);
-        assert_eq!(HashSet::from([41, 48, 83, 86, 17]), card.winning_numbers);
-        assert_eq!(
-            HashSet::from([83, 86, 6, 31, 17, 9, 48, 53]),
-            card.scratched_numbers
-        );
-        assert_eq!(8, card.score().unwrap());
+        assert_eq!(4, card.winning_count);
+        assert_eq!(8, card.score());
     }
 
     #[test]

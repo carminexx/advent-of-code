@@ -9,9 +9,30 @@ struct PartNumber {
     value: u32,
     pos_start: usize,
     pos_end: usize,
+    is_gear: bool,
 }
 
-fn solve(input: &str) -> u32 {
+impl PartNumber {
+    fn new(value: u32, pos_start: usize, pos_end: usize) -> PartNumber {
+        PartNumber {
+            value,
+            pos_start,
+            pos_end,
+            is_gear: false,
+        }
+    }
+
+    fn gear(pos: usize) -> PartNumber {
+        PartNumber {
+            value: 0,
+            pos_start: pos,
+            pos_end: pos,
+            is_gear: true,
+        }
+    }
+}
+
+fn solve_part1(input: &str) -> u32 {
     let raw_data = fs::read_to_string(input).unwrap();
     let schematics: Vec<&str> = raw_data.lines().filter(|x| !x.is_empty()).collect();
 
@@ -53,23 +74,26 @@ fn parse_line(line: &str) -> Vec<PartNumber> {
     line.chars().enumerate().for_each(|(pos, char)| match char {
         c if c.is_ascii_digit() => acc.push(c),
         _ => {
+            if char == '*' {
+                line_parts.push(PartNumber::gear(pos));
+            }
             if !acc.is_empty() {
-                line_parts.push(PartNumber {
-                    value: acc.parse().unwrap(),
-                    pos_start: (pos - acc.len()),
-                    pos_end: (pos - 1),
-                });
+                line_parts.push(PartNumber::new(
+                    acc.parse().unwrap(),
+                    pos - acc.len(),
+                    pos - 1,
+                ));
                 acc = String::new();
             }
         }
     });
 
     if !acc.is_empty() {
-        line_parts.push(PartNumber {
-            value: acc.parse().unwrap(),
-            pos_start: (line.len() - acc.len()),
-            pos_end: (line.len()),
-        });
+        line_parts.push(PartNumber::new(
+            acc.parse().unwrap(),
+            line.len() - acc.len(),
+            line.len(),
+        ));
     }
 
     line_parts
@@ -129,7 +153,7 @@ fn is_part_symbol(char: Option<char>) -> bool {
 }
 
 fn main() {
-    println!("Part 1: {}", solve("input.txt"));
+    println!("Part 1: {}", solve_part1("input.txt"));
 }
 
 #[cfg(test)]
@@ -143,66 +167,12 @@ mod test {
 
         println!("{:?}", parsed_parts);
 
-        assert_eq!(
-            true,
-            parsed_parts.contains(
-                &(PartNumber {
-                    value: 467,
-                    pos_start: 0,
-                    pos_end: 2
-                })
-            )
-        );
-        assert_eq!(
-            true,
-            parsed_parts.contains(
-                &(PartNumber {
-                    value: 114,
-                    pos_start: 5,
-                    pos_end: 7
-                })
-            )
-        );
-        assert_eq!(
-            true,
-            parsed_parts.contains(
-                &(PartNumber {
-                    value: 35,
-                    pos_start: 22,
-                    pos_end: 23
-                })
-            )
-        );
-        assert_eq!(
-            true,
-            parsed_parts.contains(
-                &(PartNumber {
-                    value: 633,
-                    pos_start: 26,
-                    pos_end: 28
-                })
-            )
-        );
-        assert_eq!(
-            true,
-            parsed_parts.contains(
-                &(PartNumber {
-                    value: 617,
-                    pos_start: 40,
-                    pos_end: 42
-                })
-            )
-        );
-        assert_eq!(
-            true,
-            parsed_parts.contains(
-                &(PartNumber {
-                    value: 33,
-                    pos_start: 48,
-                    pos_end: 50
-                })
-            )
-        );
+        assert_eq!(true, parsed_parts.contains(&PartNumber::new(467, 0, 2)));
+        assert_eq!(true, parsed_parts.contains(&PartNumber::new(114, 5, 7)));
+        assert_eq!(true, parsed_parts.contains(&PartNumber::new(35, 22, 23)));
+        assert_eq!(true, parsed_parts.contains(&PartNumber::new(633, 26, 28)));
+        assert_eq!(true, parsed_parts.contains(&PartNumber::new(617, 40, 42)));
+        assert_eq!(true, parsed_parts.contains(&PartNumber::new(33, 48, 50)));
     }
 
     #[test]
@@ -234,6 +204,6 @@ mod test {
 
     #[test]
     fn test_demo_input_for_part_1() {
-        assert_eq!(4361, solve("demo-input.txt"));
+        assert_eq!(4361, solve_part1("demo-input.txt"));
     }
 }

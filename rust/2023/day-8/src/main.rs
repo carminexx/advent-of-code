@@ -49,6 +49,38 @@ fn solve_part1(input: &str) -> u32 {
     steps
 }
 
+fn solve_part2(input: &str) -> u32 {
+    let (directions, network) = parse_input(input);
+
+    let maximum_epochs = 500;
+    let mut steps: u32 = 0;
+
+    let mut current_nodes: Vec<&NetworkNode> = network.iter().filter(|x| x.0.ends_with("A")).map(|x| x.1).collect();
+
+    'outer: for _ in 1..maximum_epochs {
+        for step in &directions {
+            steps += 1;
+
+            for i in 0..current_nodes.len() {
+                let left_node = network.get(&current_nodes[i].left).unwrap();
+                let right_node = network.get(&current_nodes[i].right).unwrap();
+                
+                current_nodes[i] = match step {
+                    Direction::Left => &left_node,
+                    Direction::Right => &right_node,
+                };
+            }
+
+            if current_nodes.iter().all(|x| x.location.ends_with("Z")) {
+                println!("LAST: Step {}, nodes: {:?}", steps, current_nodes);
+                break 'outer;
+            }
+        }
+    }
+
+    steps
+}
+
 fn parse_input(input: &str) -> (Vec<Direction>, HashMap<String, NetworkNode>) {
     let raw_data = fs::read_to_string(input).unwrap();
 
@@ -88,6 +120,7 @@ fn parse_input(input: &str) -> (Vec<Direction>, HashMap<String, NetworkNode>) {
 
 fn main() {
     println!("Part 1: {}", solve_part1("input.txt"));
+    println!("Part 2: {}", solve_part2("input.txt"));
 }
 
 #[cfg(test)]
@@ -102,5 +135,10 @@ mod test {
     #[test]
     fn test_demo_input_for_part_1_bis() {
         assert_eq!(6, solve_part1("demo-input-2.txt"));
+    }
+
+    #[test]
+    fn test_demo_input_for_part_2() {
+        assert_eq!(6, solve_part2("demo-input-part-2.txt"));
     }
 }

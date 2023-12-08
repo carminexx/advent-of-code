@@ -30,6 +30,14 @@ impl PartNumber {
             is_gear: true,
         }
     }
+
+    fn get_safe_pos(&self) -> usize {
+        if self.pos_start == 0 {
+            0
+        } else {
+            &self.pos_start - 1
+        }
+    }
 }
 
 fn solve_part1(input: &str) -> u32 {
@@ -67,6 +75,39 @@ fn solve_part1(input: &str) -> u32 {
     valid_parts.iter().sum()
 }
 
+fn solve_part2(input: &str) -> u32 {
+    let raw_data = fs::read_to_string(input).unwrap();
+    let schematics: Vec<&str> = raw_data.lines().filter(|x| !x.is_empty()).collect();
+
+    let mut gear_ratios: Vec<u32> = Vec::new();
+
+    let mut first_line = extract_gear_ratios(
+        parse_line(schematics.first().unwrap()),
+        Vec::new(),
+        parse_line(schematics[1]),
+    );
+    gear_ratios.append(&mut first_line);
+
+    schematics.windows(3).for_each(|s| {
+        let top = s[0];
+        let current = s[1];
+        let bottom = s[2];
+
+        let mut nth_line =
+            extract_gear_ratios(parse_line(current), parse_line(top), parse_line(bottom));
+        gear_ratios.append(&mut nth_line);
+    });
+
+    let mut last_line = extract_gear_ratios(
+        parse_line(schematics.last().unwrap()),
+        parse_line(schematics.get(schematics.len() - 2).copied().unwrap()),
+        Vec::new(),
+    );
+    gear_ratios.append(&mut last_line);
+
+    gear_ratios.iter().sum()
+}
+
 fn parse_line(line: &str) -> Vec<PartNumber> {
     let mut line_parts: Vec<PartNumber> = Vec::new();
     let mut acc: String = String::new();
@@ -97,6 +138,35 @@ fn parse_line(line: &str) -> Vec<PartNumber> {
     }
 
     line_parts
+}
+
+fn extract_gear_ratios(
+    current_line_parts: Vec<PartNumber>,
+    top_line_parts: Vec<PartNumber>,
+    bottom_line_parts: Vec<PartNumber>,
+) -> Vec<u32> {
+    current_line_parts
+        .iter()
+        .filter(|x| x.is_gear)
+        .map(|x| {
+            let gear_pos = x.pos_start;
+
+            let gear_pairs: Vec<u32> = current_line_parts
+                .iter()
+                .chain(top_line_parts.iter())
+                .chain(bottom_line_parts.iter())
+                .filter(|x| !x.is_gear)
+                .filter(|x| x.get_safe_pos() <= gear_pos && x.pos_end + 1 >= gear_pos)
+                .map(|x| x.value)
+                .collect();
+
+            if gear_pairs.len() == 2 {
+                gear_pairs.iter().product()
+            } else {
+                0
+            }
+        })
+        .collect::<Vec<u32>>()
 }
 
 fn extract_valid_parts(
@@ -154,6 +224,7 @@ fn is_part_symbol(char: Option<char>) -> bool {
 
 fn main() {
     println!("Part 1: {}", solve_part1("input.txt"));
+    println!("Part 2: {}", solve_part2("input.txt"));
 }
 
 #[cfg(test)]
@@ -165,14 +236,15 @@ mod test {
         let lines: &str = "467..114.....*........35..633.......#...617*....33";
         let parsed_parts = parse_line(lines);
 
-        println!("{:?}", parsed_parts);
-
         assert_eq!(true, parsed_parts.contains(&PartNumber::new(467, 0, 2)));
         assert_eq!(true, parsed_parts.contains(&PartNumber::new(114, 5, 7)));
         assert_eq!(true, parsed_parts.contains(&PartNumber::new(35, 22, 23)));
         assert_eq!(true, parsed_parts.contains(&PartNumber::new(633, 26, 28)));
         assert_eq!(true, parsed_parts.contains(&PartNumber::new(617, 40, 42)));
         assert_eq!(true, parsed_parts.contains(&PartNumber::new(33, 48, 50)));
+
+        assert_eq!(true, parsed_parts.contains(&PartNumber::gear(13)));
+        assert_eq!(true, parsed_parts.contains(&PartNumber::gear(43)));
     }
 
     #[test]
@@ -205,5 +277,10 @@ mod test {
     #[test]
     fn test_demo_input_for_part_1() {
         assert_eq!(4361, solve_part1("demo-input.txt"));
+    }
+
+    #[test]
+    fn test_demo_input_for_part_2() {
+        assert_eq!(467835, solve_part2("demo-input.txt"));
     }
 }

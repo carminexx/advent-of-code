@@ -24,46 +24,17 @@ impl NetworkNode {
 }
 
 fn solve_part1(input: &str) -> u32 {
-    let raw_data = fs::read_to_string(input).unwrap();
-
-    let directions: Vec<Direction> = raw_data
-        .lines()
-        .next()
-        .unwrap()
-        .chars()
-        .map(|x| match x {
-            'L' => Direction::Left,
-            'R' => Direction::Right,
-            _ => todo!(),
-        })
-        .collect();
-
-    let mut network: HashMap<&str, NetworkNode> = HashMap::new();
-
-    raw_data.lines().skip(2).for_each(|x| {
-        let (location, targets) = x.split_once(" = ").unwrap();
-        let targets = targets.replace(['(', ')'], "");
-        let (left, right) = targets.split_once(", ").unwrap();
-
-        network.insert(
-            location.as_ref(),
-            NetworkNode::new(
-                String::from(location),
-                String::from(left),
-                String::from(right),
-            ),
-        );
-    });
+    let (directions, network) = parse_input(input);
 
     let maximum_epochs = 50;
     let mut steps: u32 = 0;
 
     let mut current_node = network.get("AAA");
 
-    for _ in 1..maximum_epochs {
+    'outer: for _ in 1..maximum_epochs {
         for step in &directions {
             match current_node {
-                Some(c) if c.location == "ZZZ" => return steps,
+                Some(c) if c.location == "ZZZ" => break 'outer,
                 _ => {
                     current_node = match step {
                         Direction::Left => network.get(&current_node.unwrap().left as &str),
@@ -76,6 +47,43 @@ fn solve_part1(input: &str) -> u32 {
     }
 
     steps
+}
+
+fn parse_input(input: &str) -> (Vec<Direction>, HashMap<String, NetworkNode>) {
+    let raw_data = fs::read_to_string(input).unwrap();
+
+    let directions: Vec<Direction> = raw_data
+        .lines()
+        .next()
+        .unwrap()
+        .chars()
+        .map(|x| match x {
+            'L' => Direction::Left,
+            'R' => Direction::Right,
+            _ => unreachable!(),
+        })
+        .collect();
+
+    let network: HashMap<String, NetworkNode> = raw_data
+        .lines()
+        .skip(2)
+        .map(|x| {
+            let (location, targets) = x.split_once(" = ").unwrap();
+            let targets = targets.replace(['(', ')'], "");
+            let (left, right) = targets.split_once(", ").unwrap();
+
+            (
+                location.to_owned(),
+                NetworkNode::new(
+                    String::from(location),
+                    String::from(left),
+                    String::from(right),
+                ),
+            )
+        })
+        .collect();
+
+    (directions, network)
 }
 
 fn main() {

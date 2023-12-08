@@ -20,3 +20,4 @@
 |--------|----------|---------------------------------------------------|-------------------------------------------------------------------------------------------------|---------|--------|
 | Day 1  | Rust     |[Problem 1](https://adventofcode.com/2022/day/1)   | [main.rs](https://github.com/carminexx/Advent-Of-Code/blob/develop/rust/2022/day-1/src/main.rs) | ✓       | ✓      |
 | Day 2  | Rust     |[Problem 2](https://adventofcode.com/2022/day/2)   | [main.rs](https://github.com/carminexx/Advent-Of-Code/blob/develop/rust/2022/day-2/src/main.rs) | ✓       | ✓      |
+| Day 2  | Rust     |[Problem 3](https://adventofcode.com/2022/day/3)   | [main.rs](https://github.com/carminexx/Advent-Of-Code/blob/develop/rust/2022/day-3/src/main.rs) | ✓       | todo   |

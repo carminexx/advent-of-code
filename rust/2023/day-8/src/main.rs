@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fs};
+use std::{collections::HashMap, fs, mem};
 
 #[derive(Debug)]
 enum Direction {
@@ -49,36 +49,46 @@ fn solve_part1(input: &str) -> u32 {
     steps
 }
 
-fn solve_part2(input: &str) -> u32 {
+fn solve_part2(input: &str) -> u64 {
     let (directions, network) = parse_input(input);
 
-    let maximum_epochs = 500;
-    let mut steps: u32 = 0;
+    let maximum_epochs = 5000;
 
-    let mut current_nodes: Vec<&NetworkNode> = network.iter().filter(|x| x.0.ends_with("A")).map(|x| x.1).collect();
+    let mut current_nodes: Vec<&NetworkNode> = network
+        .iter()
+        .filter(|x| x.0.ends_with('A'))
+        .map(|x| x.1)
+        .collect();
+
+    let mut cycle_steps: Vec<u32> = Vec::new();
 
     'outer: for _ in 1..maximum_epochs {
-        for step in &directions {
-            steps += 1;
+        for i in 0..current_nodes.len() {
+            let mut steps: u32 = 0;
 
-            for i in 0..current_nodes.len() {
-                let left_node = network.get(&current_nodes[i].left).unwrap();
-                let right_node = network.get(&current_nodes[i].right).unwrap();
-                
-                current_nodes[i] = match step {
-                    Direction::Left => &left_node,
-                    Direction::Right => &right_node,
-                };
+            while !current_nodes[i].location.ends_with('Z') {
+                for step in &directions {
+                    let left_node = network.get(&current_nodes[i].left).unwrap();
+                    let right_node = network.get(&current_nodes[i].right).unwrap();
+
+                    current_nodes[i] = match step {
+                        Direction::Left => left_node,
+                        Direction::Right => right_node,
+                    };
+
+                    steps += 1;
+                }
             }
 
-            if current_nodes.iter().all(|x| x.location.ends_with("Z")) {
-                println!("LAST: Step {}, nodes: {:?}", steps, current_nodes);
-                break 'outer;
-            }
+            cycle_steps.push(steps);
+        }
+
+        if current_nodes.iter().all(|x| x.location.ends_with('Z')) {
+            break 'outer;
         }
     }
 
-    steps
+    cycle_steps.into_iter().fold(1, |acc, s| lcm(acc, s as u64))
 }
 
 fn parse_input(input: &str) -> (Vec<Direction>, HashMap<String, NetworkNode>) {
@@ -118,6 +128,28 @@ fn parse_input(input: &str) -> (Vec<Direction>, HashMap<String, NetworkNode>) {
     (directions, network)
 }
 
+fn lcm(first: u64, second: u64) -> u64 {
+    first * second / gcd(first, second)
+}
+
+fn gcd(first: u64, second: u64) -> u64 {
+    let mut max = first;
+    let mut min = second;
+    if min > max {
+        mem::swap(&mut max, &mut min);
+    }
+
+    loop {
+        let res = max % min;
+        if res == 0 {
+            return min;
+        }
+
+        max = min;
+        min = res;
+    }
+}
+
 fn main() {
     println!("Part 1: {}", solve_part1("input.txt"));
     println!("Part 2: {}", solve_part2("input.txt"));
@@ -140,5 +172,14 @@ mod test {
     #[test]
     fn test_demo_input_for_part_2() {
         assert_eq!(6, solve_part2("demo-input-part-2.txt"));
+    }
+
+    #[test]
+    fn test_solve_part_1() {
+        assert_eq!(13207, solve_part2("input.txt"));
+    }
+
+    fn test_solve_part_2() {
+        assert_eq!(12324145107121, solve_part2("input.txt"));
     }
 }

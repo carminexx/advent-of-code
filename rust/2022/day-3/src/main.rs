@@ -16,13 +16,33 @@ fn solve_part1(input: &str) -> u32 {
         .sum()
 }
 
+fn solve_part2(input: &str) -> u32 {
+    let input: String = read_to_string(input).unwrap();
+
+    input
+        .lines()
+        .collect::<Vec<_>>()
+        .chunks(3)
+        .map(|x| {
+            let common_elements = x
+                .iter()
+                .map(|line| line.chars().collect::<HashSet<char>>())
+                .reduce(|acc, set| &acc & &set)
+                .unwrap();
+
+            elem_to_priority(common_elements.iter().collect::<Vec<_>>().first().unwrap())
+        })
+        .sum()
+}
+
 fn elem_to_priority(elem: &char) -> u32 {
     let mut priorities = ('a'..='z').chain('A'..='Z');
     priorities.position(|x| x == *elem).unwrap() as u32 + 1
 }
 
 fn main() {
-    println!("Part 1: {}", solve_part1("input.txt"))
+    println!("Part 1: {}", solve_part1("input.txt"));
+    println!("Part 2: {}", solve_part2("input.txt"))
 }
 
 #[cfg(test)]
@@ -35,7 +55,17 @@ mod test {
     }
 
     #[test]
+    fn test_demo_input_for_part_2() {
+        assert_eq!(70, solve_part2("demo-input.txt"));
+    }
+
+    #[test]
     fn test_input_for_part_1() {
         assert_eq!(8233, solve_part1("input.txt"));
+    }
+
+    #[test]
+    fn test_input_for_part_2() {
+        assert_eq!(2821, solve_part2("input.txt"));
     }
 }

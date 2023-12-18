@@ -7,6 +7,7 @@
         "./rust/2023/day-2/Cargo.toml",
         "./rust/2023/day-3/Cargo.toml",
         "./rust/2023/day-4/Cargo.toml",
+        "./rust/2023/day-6/Cargo.toml",
         "./rust/2023/day-8/Cargo.toml",
         "./rust/2023/day-1-bis/Cargo.toml",
         "./rust/2022/day-2-bis/Cargo.toml"

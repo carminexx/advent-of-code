@@ -11,7 +11,7 @@ Some of my solutions for [Advent of Code](https://adventofcode.com/) puzzles, mo
 | Day 3  | Rust     |[Gear Ratios](https://adventofcode.com/2023/day/3)         | [main.rs](https://github.com/carminexx/Advent-Of-Code/blob/develop/rust/2023/day-3/src/main.rs) | ✓       | ✓      |
 | Day 4  | Rust     |[Scratchcards](https://adventofcode.com/2023/day/4)        | [main.rs](https://github.com/carminexx/Advent-Of-Code/blob/develop/rust/2023/day-4/src/main.rs) | ✓       | ✓      |
 | Day 5  | Rust     |[If You Give A Seed A Fertilizer](https://adventofcode.com/2023/day/5) |   | todo       | todo      |
-| Day 6  | Rust     |[Wait For It](https://adventofcode.com/2023/day/6)         |  | todo       | todo      |
+| Day 6  | Rust     |[Wait For It](https://adventofcode.com/2023/day/6)         | [main.rs](https://github.com/carminexx/Advent-Of-Code/blob/develop/rust/2023/day-6/src/main.rs) | ✓       | ✓      |
 | Day 7  | Rust     |[Camel Cards](https://adventofcode.com/2023/day/7)         |  | todo       | todo      |
 | Day 8  | Rust     |[Haunted Wasteland](https://adventofcode.com/2023/day/8)   | [main.rs](https://github.com/carminexx/Advent-Of-Code/blob/develop/rust/2023/day-8/src/main.rs) | ✓       | ✓      |
 

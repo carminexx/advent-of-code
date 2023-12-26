@@ -1,4 +1,4 @@
-# 🎄 Advent of Code
+2# 🎄 Advent of Code
 
 Some of my solutions for [Advent of Code](https://adventofcode.com/) puzzles, mostly done during my spare time or coffee breaks.
 
@@ -14,6 +14,8 @@ Some of my solutions for [Advent of Code](https://adventofcode.com/) puzzles, mo
 | Day 6  | Rust     |[Wait For It](https://adventofcode.com/2023/day/6)         | [main.rs](https://github.com/carminexx/Advent-Of-Code/blob/develop/rust/2023/day-6/src/main.rs) | ✓       | ✓      |
 | Day 7  | Rust     |[Camel Cards](https://adventofcode.com/2023/day/7)         |  | todo       | todo      |
 | Day 8  | Rust     |[Haunted Wasteland](https://adventofcode.com/2023/day/8)   | [main.rs](https://github.com/carminexx/Advent-Of-Code/blob/develop/rust/2023/day-8/src/main.rs) | ✓       | ✓      |
+| ...    |
+| Day 24  | Rust     |[Never Tell Me The Odds](https://adventofcode.com/2023/day/24)   | [main.rs](https://github.com/carminexx/Advent-Of-Code/blob/develop/rust/2023/day-24/src/main.rs) | ✓       | todo      |
 
 
 ## 2022
